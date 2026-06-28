@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Слайдер изображений — Кейс 3</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .slider-wrapper {
+      max-width: 760px;
+      width: 100%;
+    }
+
+    h1 {
+      text-align: center;
+      color: #e2e8f0;
+      font-size: 1.5rem;
+      margin-bottom: 24px;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Основной контейнер слайдера ── */
+    .slider {
+      background: #0d1b2a;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+    }
+
+    /* ── Область изображения ── */
+    .slide-area {
+      position: relative;
+      height: 420px;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      transform: scale(1.03);
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: scale(1);
+      z-index: 1;
+    }
+
+    /* SVG-заглушки вместо реальных фото */
+    .slide-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .slide-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 5rem;
+      flex-direction: column;
+      gap: 12px;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .slide-caption {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.85);
+    }
+
+    /* Цветовые фоны слайдов */
+    .slide:nth-child(1) .slide-placeholder { background: linear-gradient(135deg,#667eea,#764ba2); }
+    .slide:nth-child(2) .slide-placeholder { background: linear-gradient(135deg,#f093fb,#f5576c); }
+    .slide:nth-child(3) .slide-placeholder { background: linear-gradient(135deg,#4facfe,#00f2fe); }
+    .slide:nth-child(4) .slide-placeholder { background: linear-gradient(135deg,#43e97b,#38f9d7); }
+    .slide:nth-child(5) .slide-placeholder { background: linear-gradient(135deg,#fa709a,#fee140); }
+
+    /* ── Счётчик поверх ── */
+    .counter-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 10;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(8px);
+      color: #f1f5f9;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.15);
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Стрелки ── */
+    .arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: white;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, transform 0.15s;
+      user-select: none;
+    }
+
+    .arrow:hover {
+      background: rgba(255,255,255,0.2);
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .arrow:active { transform: translateY(-50%) scale(0.96); }
+
+    .arrow-prev { left: 16px; }
+    .arrow-next { right: 16px; }
+
+    /* ── Нижняя панель ── */
+    .controls {
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .btn {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-prev {
+      background: #334155;
+      color: #e2e8f0;
+    }
+    .btn-prev:hover { background: #475569; }
+
+    .btn-next {
+      background: #0284c7;
+      color: white;
+    }
+    .btn-next:hover { background: #0369a1; }
+
+    /* ── Точки ── */
+    .dots {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #475569;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .dot.active {
+      background: #38bdf8;
+      transform: scale(1.35);
+    }
+
+    /* ── Счётчик внизу ── */
+    .counter-text {
+      color: #94a3b8;
+      font-size: 0.85rem;
+      min-width: 110px;
+      text-align: right;
+    }
+
+    /* ── Клавиатурная подсказка ── */
+    .hint {
+      text-align: center;
+      color: #475569;
+      font-size: 0.75rem;
+      margin-top: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="slider-wrapper">
+  <h1>🖼 Слайдер изображений</h1>
+
+  <div class="slider">
+    <div class="slide-area" id="slideArea">
+
+      <!-- Счётчик -->
+      <div class="counter-badge" id="counterBadge">1 из 5</div>
+
+      <!-- Кнопки-стрелки -->
+      <button class="arrow arrow-prev" onclick="prevSlide()" title="Назад">&#8592;</button>
+      <button class="arrow arrow-next" onclick="nextSlide()" title="Вперёд">&#8594;</button>
+
+      <!-- Слайды -->
+      <div class="slide active">
+        <div class="slide-placeholder">
+          🌄
+          <span class="slide-caption">Горный рассвет</span>
+        </div>
+      </div>
+
+      <div class="slide">
+        <div class="slide-placeholder">
+          🌊
+          <span class="slide-caption">Морской берег</span>
+        </div>
+      </div>
+
+      <div class="slide">
+        <div class="slide-placeholder">
+          🏙
+          <span class="slide-caption">Ночной город</span>
+        </div>
+      </div>
+
+      <div class="slide">
+        <div class="slide-placeholder">
+          🌿
+          <span class="slide-caption">Лесная тропа</span>
+        </div>
+      </div>
+
+      <div class="slide">
+        <div class="slide-placeholder">
+          🌸
+          <span class="slide-caption">Весеннее цветение</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Нижняя панель -->
+    <div class="controls">
+      <button class="btn btn-prev" onclick="prevSlide()">← Назад</button>
+
+      <div class="dots" id="dots"></div>
+
+      <button class="btn btn-next" onclick="nextSlide()">Вперёд →</button>
+    </div>
+  </div>
+
+  <p class="hint">← → клавиши клавиатуры для навигации</p>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const dotsContainer = document.getElementById('dots');
+const counterBadge = document.getElementById('counterBadge');
+const total = slides.length;
+let current = 0;
+
+// ── Создаём точки ──────────────────────────────────────────────────────────
+slides.forEach((_, i) => {
+  const dot = document.createElement('div');
+  dot.className = 'dot' + (i === 0 ? ' active' : '');
+  dot.addEventListener('click', () => goTo(i));
+  dotsContainer.appendChild(dot);
+});
+
+// ── Перейти к слайду ───────────────────────────────────────────────────────
+function goTo(index) {
+  slides[current].classList.remove('active');
+  dotsContainer.children[current].classList.remove('active');
+
+  // Зацикливание: после последнего → первый, перед первым → последний
+  current = (index + total) % total;
+
+  slides[current].classList.add('active');
+  dotsContainer.children[current].classList.add('active');
+
+  // Обновляем счётчик
+  counterBadge.textContent = `${current + 1} из ${total}`;
+}
+
+// ── Вперёд / Назад ─────────────────────────────────────────────────────────
+function nextSlide() { goTo(current + 1); }
+function prevSlide() { goTo(current - 1); }
+
+// ── Клавиатура ─────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') nextSlide();
+  if (e.key === 'ArrowLeft')  prevSlide();
+});
+
+// ── Свайп (мобильные) ──────────────────────────────────────────────────────
+let touchStartX = 0;
+const area = document.getElementById('slideArea');
+
+area.addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+});
+
+area.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 40) {
+    dx < 0 ? nextSlide() : prevSlide();
+  }
+});
+</script>
+</body>
+</html>
