@@ -1,3 +1,3 @@
 # image-slider
 
-University practice task.
+Слайдер Универ
